@@ -1,37 +1,36 @@
--- select *
--- from CovidVaccinations 
--- limit 5;
--- 
--- select *
--- from CovidDeaths
--- limit 5;
+/*
+Covid 19 Data Exploration 
 
--- Select Data that we are going to be using
+Skills used: Joins, CTE's, Temp Tables, Windows Functions, Aggregate Functions, Creating Views, Converting Data Types
+
+*/
+
+-- Select Data that we are going to be starting with
 Select Location, date_parsed, total_cases, new_cases, total_deaths, population
 FROM CovidDeaths
 ORDER BY 1,2;
 
--- Looking at Total Cases vs Total Deaths
+-- Total Cases vs Total Deaths
 -- Shows the likelihood of dying if you contract covid in your country
 Select Location, date_parsed, total_cases, total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
 FROM CovidDeaths
 WHERE Location LIKE '%states%'
 ORDER BY 1,2;
 
--- Looking at the Total Cases vs the Population
+-- Total Cases vs the Population
 -- Shows estimate of what percentage of population got Covid (noting a person could have gotten it multiple times)
 Select Location, date_parsed, Population, total_cases, (total_cases/Population)*100 as PercentPopulationInfected
 WHERE Location LIKE '%states%'
 ORDER BY 1,2;
 
--- Looking at Countries with highest infection rate compared to population
+-- Countries with highest infection rate compared to population
 Select Location, Population, MAX(total_cases) HighestInfectionCount, (MAX(total_cases)/Population)*100 as PercentPopulationInfected
 FROM CovidDeaths
 -- WHERE Location LIKE '%states%'
 GROUP by Location,Population
 ORDER BY PercentPopulationInfected DESC;
 
--- Showing the countries with highest death count per population
+-- Countries with highest death count per population
 -- cast from varchar, not ordered properly
 Select Location, MAX(cast(total_deaths as UNSIGNED)) TotalDeathCount, Continent
 FROM CovidDeaths
@@ -41,11 +40,11 @@ ORDER BY TotalDeathCount  DESC;
 
 
 
--- Breakdown by continent
+-- BREAKING DOWN BY CONTINENT
 
 
 -- Total death count for each continent
--- cast from varchar, not ordered properly
+-- cast from varchar since not ordered properly
 Select Continent, MAX(cast(total_deaths as UNSIGNED)) TotalDeathCount
 FROM CovidDeaths
 WHERE continent != ''
@@ -53,18 +52,17 @@ GROUP by Continent
 ORDER BY TotalDeathCount DESC;
 
 
--- Global Numbers
-
--- DeathPercentage across world per day
+-- GLOBAL NUMBERS
+-- DeathPercentage across the world per day
 Select date_parsed, SUM(new_cases) TotalCases, SUM(new_deaths) TotalDeaths, SUM(new_deaths)/SUM(new_cases)*100 DeathPercentage
 FROM CovidDeaths
 WHERE continent != ''
 GROUP BY date_parsed
 ORDER BY 1,2; 
 
--- Looking at total population vs vaccinations 
--- % of population vaccinated
--- Use CTE
+-- Total Population vs Vaccinations
+-- Shows Percentage of Population that has recieved at least one Covid Vaccine
+-- Using CTE to perform Calculation on Partition By
 WITH PopvsVac (Continent, Location, date_parsed, Populations, New_Vaccinations, RollingPeopleVaccinated)
 AS
 (
@@ -80,7 +78,6 @@ SELECT  *, (RollingPeopleVaccinated/Populations)*100
 FROM PopvsVac
 
 -- USE TEMP TABLE
-
 DROP TEMPORARY TABLE IF EXISTS PercentPopulationVaccinated;
 CREATE TEMPORARY TABLE PercentPopulationVaccinated (
   Continent                 VARCHAR(255),
@@ -115,8 +112,7 @@ SELECT
 FROM PercentPopulationVaccinated;
 
 
--- Creating view to store data for later visualizations
-
+-- Creating View to store data for later visualizations
 Create View PercentPopulationVaccinated as
 SELECT cd.continent, cd.location, cd.date_parsed, cd.population, cv.new_vaccinations
 , SUM(cv.new_vaccinations) OVER (Partition by cd.location ORDER BY cd.location, cd.date_parsed) RollingPeopleVaccinated
