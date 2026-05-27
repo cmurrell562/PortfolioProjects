@@ -62,7 +62,8 @@ ORDER BY 1,2;
 
 -- Total Population vs Vaccinations
 -- Shows Percentage of Population that has recieved at least one Covid Vaccine
--- Using CTE to perform Calculation on Partition By
+-- Using a CTE and window function to calculate the rolling sum of daily vaccinations by country (location), 
+--		which enables the ability to get rolling % of daily vaccinations by country(location)
 WITH PopvsVac (Continent, Location, date_parsed, Populations, New_Vaccinations, RollingPeopleVaccinated)
 AS
 (
@@ -78,6 +79,8 @@ SELECT  *, (RollingPeopleVaccinated/Populations)*100
 FROM PopvsVac
 
 -- USE TEMP TABLE
+-- TEMP tables can help with temporarily storing data, for example from stored procedures, 
+-- 		to help with executing queries but the data may not need to be stored long term
 DROP TEMPORARY TABLE IF EXISTS PercentPopulationVaccinated;
 CREATE TEMPORARY TABLE PercentPopulationVaccinated (
   Continent                 VARCHAR(255),
@@ -90,7 +93,7 @@ CREATE TEMPORARY TABLE PercentPopulationVaccinated (
 
 INSERT INTO PercentPopulationVaccinated
   (Continent, Location, `Date`, Population, New_vaccinations, RollingPeopleVaccinated)
-  -- mysql wont insert into ' ', convert '' to int
+  -- mysql wont insert ' ' into columns, convert '' to int. This section's query is essentially the same query as the section above
 SELECT
   cd.continent,
   cd.location,
