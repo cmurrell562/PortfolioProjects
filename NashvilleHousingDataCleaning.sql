@@ -103,6 +103,10 @@ SET SoldAsVacant = CASE WHEN SoldAsVacant = 'Y' THEN 'Yes'
 -------------------------------------------------------
 
 -- Remove Duplicates
+	-- typically can put duplicates in temp table, probably don't want to delete actualy data by removing duplicates from raw data (database)
+	-- remove rows (where row_num > 1) that have the same parcelid, addresss, saleprice, sale date, legalreference (if this is all the same it is likely a duplicate)
+	-- The outer delete needs to know which actual rows to delete. Delete rows from NashvilleHousing where the UniqueID matches one of the duplicate UniqueIDs found in the subquery.
+	-- Can rerun the inner queries to see if anything is returned to verify if all dupes were removed
 DELETE nh
 FROM NashvilleHousing nh
 JOIN (
